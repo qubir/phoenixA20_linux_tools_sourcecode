@@ -41,7 +41,7 @@ PACK_SIG=none
 ROOT_DIR=`pwd`
 TOOLS_DIR="${ROOT_DIR}/pctools/linux"
 LICHEE_OUT="../../out/${PACK_PLATFORM}/common"
-UBUNTU_DIR="../../../../ubuntuserves"
+UBUNTU_DIR="../../../rootfs"
 
 if [ -d ${LICHEE_OUT} ] ; then
     LICHEE_OUT=`cd ${LICHEE_OUT}; pwd`
@@ -236,12 +236,8 @@ function do_pack_ubuntu()
     if [ $? == 0 ]; then
     	mkfs.ext4 -q -F ${LICHEE_OUT}/rootfs.ext4
     	sudo mount -o loop ${LICHEE_OUT}/rootfs.ext4 /mnt 
-	if [ $PACK_BOARD == "zswd" ]; then    	
-	    sudo cp -a ${UBUNTU_DIR}-cs/* /mnt
-	else
-	    sudo cp -a ${UBUNTU_DIR}/* /mnt
-	fi
-    	mount umount /mnt
+	sudo cp -a ${UBUNTU_DIR}/* /mnt
+    	sudo umount /mnt
 	cmd_done
     else
 	cmd_fail
@@ -407,7 +403,7 @@ function do_pack_linux()
     
     ln -s ${LICHEE_OUT}/boot.img boot.fex
 
-#    do_pack_ubuntu
+    do_pack_ubuntu
 
     ln -s ${LICHEE_OUT}/rootfs.ext4 rootfs.fex
     
