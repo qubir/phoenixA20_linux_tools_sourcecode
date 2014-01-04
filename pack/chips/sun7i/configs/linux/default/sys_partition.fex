@@ -54,7 +54,7 @@ size = 16384
 
 [partition]
     name         = rootfs
-    size         = 1048576
+    size         = 6291456
     downloadfile = "rootfs.fex"
     verify       = 1
     

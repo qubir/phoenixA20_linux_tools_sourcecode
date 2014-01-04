@@ -30,28 +30,19 @@ function pack_info()
     echo -e "\033[47;30mINFO: $*\033[0m"
 }
 
-. ../../buildroot/scripts/shflags/shflags
-
-# define option, format:
-#   'long option' 'default value' 'help message' 'short option'
-DEFINE_string 'chip' '' 'chip to build, e.g. sun7i' 'c'
-DEFINE_string 'platform' '' 'platform to build, e.g. linux, android' 'p'
-DEFINE_string 'board' '' 'board to build, e.g. evb' 'b'
-DEFINE_string 'boot_type' '' 'boot type, e.g. nand, card0, card2' 'B'
-DEFINE_string 'debug_mode' 'uart0' 'config debug mode, e.g. uart0, card0' 'd'
-
 # parse the command-line
-FLAGS "$@" || exit $?
-eval set -- "${FLAGS_ARGV}"
 
-PACK_CHIP=${FLAGS_chip}
-PACK_PLATFORM=${FLAGS_platform}
-PACK_BOARD=${FLAGS_board}
-PACK_DEBUG=${FLAGS_debug_mode}
+PACK_CHIP=sun7i
+PACK_PLATFORM=linux
+PACK_BOARD=PhoenixA20
+PACK_DEBUG=uart0
+PACK_SIG=none
 
 ROOT_DIR=`pwd`
 TOOLS_DIR="${ROOT_DIR}/pctools/linux"
 LICHEE_OUT="../../out/${PACK_PLATFORM}/common"
+UBUNTU_DIR="../../../../ubuntuserves"
+
 if [ -d ${LICHEE_OUT} ] ; then
     LICHEE_OUT=`cd ${LICHEE_OUT}; pwd`
 else
@@ -237,6 +228,26 @@ function do_parse()
     [ -f out/sys_config.fex ] && script_parse -f out/sys_config.fex
 }
 
+function do_pack_ubuntu()
+{
+    echo 'Build ubuntu rootfs'
+	dd if=/dev/zero of=${LICHEE_OUT}/rootfs.ext4 bs=1M count=550
+
+    if [ $? == 0 ]; then
+    	mkfs.ext4 -q -F ${LICHEE_OUT}/rootfs.ext4
+    	sudo mount -o loop ${LICHEE_OUT}/rootfs.ext4 /mnt 
+	if [ $PACK_BOARD == "zswd" ]; then    	
+	    sudo cp -a ${UBUNTU_DIR}-cs/* /mnt
+	else
+	    sudo cp -a ${UBUNTU_DIR}/* /mnt
+	fi
+    	mount umount /mnt
+	cmd_done
+    else
+	cmd_fail
+    fi
+}
+
 function do_pack_android()
 {
     pack_info "Packing for android"
@@ -253,8 +264,13 @@ function do_pack_android()
     do_debug
     do_parse
    
-    cp -rf eFex/split_xxxx.fex wboot/bootfs wboot/bootfs.ini wboot/sysrecovery.fex out/
+    cp -rf eFex/split_xxxx.fex wboot/bootfs wboot/bootfs.ini out/
     
+    if [ ${PACK_SIG} = "sig" ]; then
+        rm -rf out/bootfs/boot.axf
+        mv -v out/bootfs/boot_signature.axf out/bootfs/boot.axf
+    fi
+
     cp -f eGon/boot0_nand.bin   out/boot0_nand.bin
     cp -f eGon/boot1_nand.bin   out/boot1_nand.fex
     cp -f eGon/boot0_sdcard.bin out/boot0_sdcard.fex
@@ -269,9 +285,17 @@ function do_pack_android()
     
     local IMG_NAME
     if [ $PACK_DEBUG = "card0" ] ; then
+        if [ ${PACK_SIG} = "sig" ]; then
+        IMG_NAME="${PACK_CHIP}_${PACK_PLATFORM}_${PACK_BOARD}_${PACK_DEBUG}_${PACK_SIG}.img"
+        else
         IMG_NAME="${PACK_CHIP}_${PACK_PLATFORM}_${PACK_BOARD}_${PACK_DEBUG}.img"
+        fi
     else
+        if [ ${PACK_SIG} = "sig" ]; then
+        IMG_NAME="${PACK_CHIP}_${PACK_PLATFORM}_${PACK_BOARD}_${PACK_SIG}.img"
+        else
         IMG_NAME="${PACK_CHIP}_${PACK_PLATFORM}_${PACK_BOARD}.img"
+        fi
     fi
     
     echo "imagename = ${IMG_NAME}" >> image.cfg
@@ -295,10 +319,26 @@ function do_pack_android()
     
     u_boot_env_gen env.cfg env.fex
     
-    ln -s ${ANDROID_IMAGE_OUT}/boot.img     boot.fex
-    ln -s ${ANDROID_IMAGE_OUT}/system.img   system.fex
     ln -s ${ANDROID_IMAGE_OUT}/recovery.img recovery.fex
     
+	if [ ${PACK_SIG} = "sig" ]; then
+
+		cp $ANDROID_IMAGE_OUT/boot.img boot.fex
+        cp $ANDROID_IMAGE_OUT/system.img system.fex
+
+		pack_cmd signature -v -b boot.fex
+		pack_cmd simg system.fex system.img
+		pack_cmd signature -v -s system.fex system.img
+		rm -rf system.img
+
+    else
+		
+        ln -s $ANDROID_IMAGE_OUT/boot.img boot.fex
+        ln -s $ANDROID_IMAGE_OUT/system.img system.fex
+	
+    fi
+
+
     pack_cmd dragon image.cfg sys_partition.fex
     
     if [ -e ${IMG_NAME} ]; then
@@ -339,9 +379,9 @@ function do_pack_linux()
     
     local IMG_NAME
     if [ $PACK_DEBUG = "card0" ] ; then
-        IMG_NAME="${PACK_CHIP}_${PACK_PLATFORM}_${PACK_BOARD}_${PACK_DEBUG}.img"
+        IMG_NAME="PhoenixA20_${PACK_DEBUG}.img"
     else
-        IMG_NAME="${PACK_CHIP}_${PACK_PLATFORM}_${PACK_BOARD}.img"
+        IMG_NAME="PhoenixA20.img"
     fi
     
     echo "imagename = ${IMG_NAME}" >> image.cfg
@@ -366,6 +406,9 @@ function do_pack_linux()
     u_boot_env_gen env.cfg env.fex
     
     ln -s ${LICHEE_OUT}/boot.img boot.fex
+
+#    do_pack_ubuntu
+
     ln -s ${LICHEE_OUT}/rootfs.ext4 rootfs.fex
     
     pack_cmd dragon image.cfg sys_partition.fex
@@ -428,7 +471,8 @@ function do_pack_dragonboard()
     cp test_config.fex bootfs/test_config.fex
     cp *.hcd bootfs/
     cp *.bin bootfs/
-
+    cp *.txt bootfs/
+    
     busybox unix2dos test_config.fex
     pack_cmd script test_config.fex
     cp test_config.bin bootfs/test_config.bin
