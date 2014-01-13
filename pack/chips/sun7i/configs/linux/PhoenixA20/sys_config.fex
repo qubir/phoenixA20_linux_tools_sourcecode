@@ -121,7 +121,7 @@ dram_emr3           = 0x0
 ;Mali configuration
 ;-------------------------------------------------------------------------------
 [mali_para]
-mali_used           = 1
+mali_used           = 0 
 mali_clkdiv         = 1
 
 ;-------------------------------------------------------------------------------
@@ -163,7 +163,7 @@ twi1_scl            = port:PB18<2><default><default><default>
 twi1_sda            = port:PB19<2><default><default><default>
 
 [twi2_para]
-twi2_used           = 1
+twi2_used           = 0
 twi2_scl            = port:PB20<2><default><default><default>
 twi2_sda            = port:PB21<2><default><default><default>
 
