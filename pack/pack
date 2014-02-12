@@ -231,7 +231,9 @@ function do_parse()
 function do_pack_ubuntu()
 {
     echo 'Build ubuntu rootfs'
-	dd if=/dev/zero of=${LICHEE_OUT}/rootfs.ext4 bs=1M count=550
+	size=$(sudo du -sm ${UBUNTU_DIR} | awk '{print int($1)}')
+        let size+=100
+        dd if=/dev/zero of=${LICHEE_OUT}/rootfs.ext4 bs=1M count=${size}
 
     if [ $? == 0 ]; then
     	mkfs.ext4 -q -F ${LICHEE_OUT}/rootfs.ext4
