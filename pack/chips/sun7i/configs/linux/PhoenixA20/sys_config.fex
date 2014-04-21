@@ -97,7 +97,7 @@ standby_mode		= 0
 ;-------------------------------------------------------------------------------
 [dram_para]
 dram_baseaddr       = 0x40000000
-dram_clk            = 408
+dram_clk            = 432
 dram_type           = 3
 dram_rank_num       = 0xffffffff
 dram_chip_density   = 0xffffffff
@@ -163,7 +163,7 @@ twi1_scl            = port:PB18<2><default><default><default>
 twi1_sda            = port:PB19<2><default><default><default>
 
 [twi2_para]
-twi2_used           = 0
+twi2_used           = 1
 twi2_scl            = port:PB20<2><default><default><default>
 twi2_sda            = port:PB21<2><default><default><default>
 
@@ -202,7 +202,7 @@ uart_dcd            = port:PA16<4><1><default><default>
 uart_ring           = port:PA17<4><1><default><default>
 
 [uart_para2]
-uart_used           = 0
+uart_used           = 1
 uart_port           = 2
 uart_type           = 4
 uart_tx             = port:PI18<3><1><default><default>
@@ -211,23 +211,23 @@ uart_rts            = port:PI16<3><1><default><default>
 uart_cts            = port:PI17<3><1><default><default>
 
 [uart_para3]
-uart_used           = 0
+uart_used           = 1
 uart_port           = 3
-uart_type           = 4
+uart_type           = 2
 uart_tx             = port:PG06<4><1><default><default>
 uart_rx             = port:PG07<4><1><default><default>
 uart_rts            = port:PG08<4><1><default><default>
 uart_cts            = port:PG09<4><1><default><default>
 
 [uart_para4]
-uart_used           = 0
+uart_used           = 1
 uart_port           = 4
 uart_type           = 2
 uart_tx             = port:PG10<4><1><default><default>
 uart_rx             = port:PG11<4><1><default><default>
 
 [uart_para5]
-uart_used           = 0
+uart_used           = 1
 uart_port           = 5
 uart_type           = 2
 uart_tx             = port:PI10<3><1><default><default>
@@ -1150,9 +1150,6 @@ compass_int         = port:PI13<6><1><default><default>
 [bt_para]
 bt_used             = 1
 bt_uart_id          = 2
-bt_wakeup           = port:PI20<1><default><default><default>
-bt_gpio             = port:PI21<1><default><default><default>
-bt_rst              = port:PB05<1><default><default><default>
 
 ;--------------------------------------------------------------------------------
 ;i2s_master:1: SND_SOC_DAIFMT_CBM_CFM(codec clk & FRM master)        use
@@ -1270,8 +1267,11 @@ spdif_dout          = port:PB13<4><1><default><default>
 spdif_din           =
 
 [audio_para]
-audio_used          = 1
-audio_pa_ctrl       = port:PH15<1><default><default><0>
+audio_used = 1
+audio_pa_ctrl = port:PH15<1><default><default><0>
+audio_lr_change = 0
+playback_used = 1
+capture_used = 1
 
 [switch_para]
 switch_used			=1
@@ -1431,7 +1431,7 @@ key_max			=6
 ;
 ;----------------------------------------------------------------------------------
 [dvfs_table]
-max_freq = 912000000
+max_freq = 1008000000
 normal_freq = 720000000
 min_freq = 60000000
 
